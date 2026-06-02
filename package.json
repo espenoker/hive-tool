@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@mechanic-design/cli": "^2.0.0",
+    "@mechanic-design/core": "^2.0.0",
     "@mechanic-design/engine-canvas": "^2.0.0"
   }
 }
