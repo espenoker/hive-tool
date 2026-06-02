@@ -1,0 +1,13 @@
+{
+  "name": "hive-tool",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "mechanic dev",
+    "build": "mechanic build"
+  },
+  "dependencies": {
+    "@mechanic-design/cli": "^2.0.0",
+    "@mechanic-design/engine-canvas": "^2.0.0"
+  }
+}
