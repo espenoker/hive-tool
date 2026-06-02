@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>HIVE Ad Generator</title>
+  <style>
+    :root {
+      --navy:  #2F3D48;
+      --red:   #FF371C;
+      --ice:   #CDDDE6;
+      --light: #F2F6F7;
+      --glass: rgba(255,255,255,0.07);
+      --border: rgba(255,255,255,0.12);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+      background: var(--navy);
+      color: #fff;
+      min-height: 100dvh;
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .logo {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+    }
+    .logo span { color: var(--red); }
+
+    /* ── Preview ── */
+    .preview-wrap {
+      position: relative;
+      width: 100%;
+      background: #1a242c;
+    }
+    #preview {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .preview-spinner {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s;
+    }
+    .preview-spinner.visible { opacity: 1; }
+    .spinner {
+      width: 28px; height: 28px;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Controls ── */
+    .controls {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .group-title {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.4);
+    }
+
+    label {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      color: var(--ice);
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 11px 14px;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: #fff;
+      font-size: 15px;
+      -webkit-appearance: none;
+      appearance: none;
+      outline: none;
+    }
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    textarea:focus,
+    select:focus {
+      border-color: rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.1);
+    }
+    textarea {
+      height: 76px;
+      resize: none;
+      font-family: inherit;
+      line-height: 1.45;
+    }
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='rgba(255,255,255,0.5)'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 36px;
+    }
+    option { background: #2F3D48; }
+
+    /* ── Segmented control ── */
+    .seg {
+      display: flex;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .seg-btn {
+      flex: 1;
+      padding: 10px 4px;
+      font-size: 13px;
+      font-weight: 500;
+      text-align: center;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: rgba(255,255,255,0.55);
+      transition: all 0.15s;
+      border-right: 1px solid var(--border);
+    }
+    .seg-btn:last-child { border-right: none; }
+    .seg-btn.on {
+      background: var(--red);
+      color: #fff;
+    }
+
+    /* ── Range slider ── */
+    .range-wrap { display: flex; align-items: center; gap: 12px; }
+    input[type="range"] {
+      flex: 1;
+      -webkit-appearance: none;
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+    }
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 3px;
+      border-radius: 2px;
+    }
+    .range-val {
+      font-size: 13px;
+      color: rgba(255,255,255,0.5);
+      min-width: 36px;
+      text-align: right;
+    }
+
+    /* ── Seed row ── */
+    .seed-row { display: flex; gap: 8px; }
+    .seed-row input { flex: 1; }
+    .icon-btn {
+      padding: 0 14px;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: rgba(255,255,255,0.7);
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── Action buttons ── */
+    .actions {
+      padding: 0 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      text-align: center;
+      -webkit-appearance: none;
+    }
+    .btn:active { opacity: 0.82; transform: scale(0.99); }
+    .btn-primary { background: var(--red); color: #fff; }
+    .btn-secondary {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      color: rgba(255,255,255,0.7);
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">HIVE<span>.</span></div>
+  <div style="font-size:11px;color:rgba(255,255,255,0.35);letter-spacing:.08em">AD GENERATOR</div>
+</header>
+
+<!-- Live preview -->
+<div class="preview-wrap">
+  <canvas id="preview"></canvas>
+  <div class="preview-spinner" id="spinner"><div class="spinner"></div></div>
+</div>
+
+<div class="controls">
+
+  <!-- Format & Theme -->
+  <div class="group">
+    <div class="group-title">Format & Theme</div>
+    <div>
+      <label>Format</label>
+      <select id="format">
+        <option>Instagram Square</option>
+        <option>Instagram Story</option>
+        <option>Instagram Landscape</option>
+        <option>LinkedIn Post</option>
+        <option>LinkedIn Square</option>
+      </select>
+    </div>
+    <div>
+      <label>Theme</label>
+      <div class="seg" id="themeSeg">
+        <button class="seg-btn on" data-val="Dark Navy">Dark Navy</button>
+        <button class="seg-btn" data-val="Light Ice">Light Ice</button>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- Content -->
+  <div class="group">
+    <div class="group-title">Content</div>
+    <div>
+      <label>Title</label>
+      <textarea id="title">A new era of work.
+Limitless.</textarea>
+    </div>
+    <div>
+      <label>Subheading</label>
+      <input type="text" id="subheading" placeholder="Optional">
+    </div>
+    <div>
+      <label>Meta</label>
+      <input type="text" id="meta" value="[INDUSTRIAL MACHINE INTELLIGENCE]">
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- Pattern -->
+  <div class="group">
+    <div class="group-title">Pattern</div>
+    <div>
+      <label>Shape</label>
+      <select id="shape">
+        <option>Wave</option>
+        <option>Arc</option>
+        <option>Circle</option>
+        <option>Diagonal</option>
+        <option>Cloud</option>
+      </select>
+    </div>
+    <div>
+      <label>Pixel size — <span id="rectSizeVal">18</span></label>
+      <div class="range-wrap">
+        <input type="range" id="rectSize" min="4" max="60" step="1" value="18">
+      </div>
+    </div>
+    <div>
+      <label>Density — <span id="densityVal">0.70</span></label>
+      <div class="range-wrap">
+        <input type="range" id="density" min="0.1" max="1.0" step="0.05" value="0.7">
+      </div>
+    </div>
+    <div>
+      <label>Aspect ratio — <span id="rectAspectVal">2.3</span></label>
+      <div class="range-wrap">
+        <input type="range" id="rectAspect" min="1.0" max="5.0" step="0.1" value="2.3">
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- Seed -->
+  <div class="group">
+    <div class="group-title">Variation</div>
+    <div>
+      <label>Seed</label>
+      <div class="seed-row">
+        <input type="number" id="seed" value="1" min="1" max="9999">
+        <button class="icon-btn" id="randBtn" title="Randomise">&#8635;</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Action buttons -->
+<div class="actions">
+  <button class="btn btn-primary" id="exportBtn">Export Image</button>
+  <button class="btn btn-secondary" id="refreshBtn">Refresh Preview</button>
+</div>
+
+<script>
+// ─── Brand tokens ─────────────────────────────────────────────────────────
+
+const COLORS = {
+  darkNavy:     "#2F3D48",
+  hiveRed:      "#FF371C",
+  darkBlueIce:  "#CDDDE6",
+  lightBlueIce: "#F2F6F7",
+  white:        "#FFFFFF",
+};
+const FONT_FAMILY = '"APK Galeria","Helvetica Neue",Helvetica,Arial,sans-serif';
+const META_FONT   = '"Courier New",Courier,monospace';
+const FORMATS = {
+  "Instagram Square":    { width: 1080, height: 1080 },
+  "Instagram Story":     { width: 1080, height: 1920 },
+  "Instagram Landscape": { width: 1080, height:  566 },
+  "LinkedIn Post":       { width: 1200, height:  628 },
+  "LinkedIn Square":     { width: 1080, height: 1080 },
+};
+
+// ─── PRNG ─────────────────────────────────────────────────────────────────
+
+function makeRng(seed) {
+  let s = seed >>> 0;
+  return () => {
+    s += 0x6d2b79f5;
+    let t = Math.imul(s ^ (s >>> 15), s | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// ─── Density maps ─────────────────────────────────────────────────────────
+
+function waveDensity(col, row, cols, rows) {
+  const x = col / Math.max(1, cols - 1);
+  const y = row / Math.max(1, rows - 1);
+  const centerY = 0.52 + 0.22 * Math.sin(x * Math.PI * 2.8);
+  const dist = Math.abs(y - centerY);
+  if (dist > 0.24) return 0;
+  return Math.pow(1 - dist / 0.24, 0.6);
+}
+function arcDensity(col, row, cols, rows) {
+  const dist = Math.sqrt((col - cols) ** 2 + (row - rows) ** 2);
+  const outerR = cols * 0.88, innerR = cols * 0.42;
+  if (dist < innerR || dist > outerR) return 0;
+  return Math.sin(((dist - innerR) / (outerR - innerR)) * Math.PI);
+}
+function circleDensity(col, row, cols, rows) {
+  const cx = cols * 0.62, cy = rows * 0.54;
+  const dist = Math.sqrt((col - cx) ** 2 + (row - cy) ** 2);
+  const radius = Math.min(cols, rows) * 0.44;
+  if (dist > radius) return 0;
+  return Math.pow(1 - dist / radius, 0.35);
+}
+function diagonalDensity(col, row, cols, rows) {
+  const x = col / Math.max(1, cols - 1);
+  const y = row / Math.max(1, rows - 1);
+  const dist = Math.abs(x + y - 1.1);
+  if (dist > 0.28) return 0;
+  return Math.pow(1 - dist / 0.28, 0.55);
+}
+function cloudDensity(col, row, cols, rows) {
+  return Math.pow(col / Math.max(1, cols - 1), 0.55) * Math.pow(row / Math.max(1, rows - 1), 0.55);
+}
+function getDensity(col, row, cols, rows, shape) {
+  switch (shape) {
+    case "Wave":     return waveDensity(col, row, cols, rows);
+    case "Arc":      return arcDensity(col, row, cols, rows);
+    case "Circle":   return circleDensity(col, row, cols, rows);
+    case "Diagonal": return diagonalDensity(col, row, cols, rows);
+    default:         return cloudDensity(col, row, cols, rows);
+  }
+}
+
+// ─── Cell setup ───────────────────────────────────────────────────────────
+
+function computeCells(width, height, rectSize, rectAspect) {
+  const rectW = Math.round(rectSize);
+  const rectH = Math.max(2, Math.round(rectSize / rectAspect));
+  const cellW = rectW + Math.round(rectW * 0.18);
+  const cellH = rectH + Math.round(rectH * 0.5);
+  const cols  = Math.ceil(width  / cellW) + 1;
+  const rows  = Math.ceil(height / cellH) + 1;
+  return { rectW, rectH, cellW, cellH, cols, rows };
+}
+function buildCells(cols, rows, shape, density, rng) {
+  const cells = new Float32Array(cols * rows * 3);
+  for (let row = 0; row < rows; row++)
+    for (let col = 0; col < cols; col++) {
+      const i = (row * cols + col) * 3;
+      cells[i]     = getDensity(col, row, cols, rows, shape) * density;
+      cells[i + 1] = rng();
+      cells[i + 2] = rng();
+    }
+  return cells;
+}
+
+// ─── Draw helpers ─────────────────────────────────────────────────────────
+
+function drawBg(ctx, w, h, theme) {
+  if (theme === "Dark Navy") {
+    ctx.fillStyle = COLORS.darkNavy;
+    ctx.fillRect(0, 0, w, h);
+  } else {
+    const g = ctx.createLinearGradient(0, 0, w * 0.6, h);
+    g.addColorStop(0, COLORS.lightBlueIce);
+    g.addColorStop(1, COLORS.darkBlueIce);
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+  }
+}
+
+function drawPixels(ctx, w, h, cells, cols, rows, cellW, cellH, rectW, rectH, color) {
+  for (let row = 0; row < rows; row++)
+    for (let col = 0; col < cols; col++) {
+      const x = col * cellW, y = row * cellH;
+      if (x >= w || y >= h) continue;
+      const i = (row * cols + col) * 3;
+      const base = cells[i], r1 = cells[i+1], r2 = cells[i+2];
+      if (r1 > base * 1.12) continue;
+      ctx.globalAlpha = Math.max(0, Math.min(1, base * 1.5) * (0.45 + r2 * 0.55));
+      ctx.fillStyle   = color;
+      ctx.fillRect(x, y, Math.min(rectW, w - x), Math.min(rectH, h - y));
+    }
+  ctx.globalAlpha = 1;
+}
+
+function drawTitle(ctx, w, h, title, theme) {
+  const color = theme === "Dark Navy" ? COLORS.white : COLORS.darkNavy;
+  const pad   = Math.round(w * 0.072);
+  const sz    = Math.round(w * 0.082);
+  const lineH = Math.round(sz * 1.07);
+  ctx.fillStyle = color; ctx.font = `${sz}px ${FONT_FAMILY}`; ctx.textBaseline = "top";
+  title.split("\n").forEach((line, i) => { if (line) ctx.fillText(line, pad, pad + i * lineH); });
+}
+
+function drawSubheading(ctx, w, h, sub, title, theme) {
+  if (!sub) return;
+  const color = theme === "Dark Navy" ? COLORS.white : COLORS.darkNavy;
+  const pad   = Math.round(w * 0.072);
+  const sz    = Math.round(w * 0.082);
+  const nLines = title.split("\n").filter(Boolean).length;
+  const afterTitle = pad + nLines * Math.round(sz * 1.07);
+  const subSz = Math.round(w * 0.028);
+  ctx.globalAlpha = 0.7;
+  ctx.fillStyle = color; ctx.font = `${subSz}px ${FONT_FAMILY}`; ctx.textBaseline = "top";
+  ctx.fillText(sub, pad, afterTitle + Math.round(subSz * 0.7));
+  ctx.globalAlpha = 1;
+}
+
+function drawMeta(ctx, w, h, meta) {
+  if (!meta) return;
+  const pad    = Math.round(w * 0.072);
+  const sz     = Math.round(w * 0.021);
+  const logoH  = Math.round(w * 0.047);
+  const bottom = h - pad - logoH * 2.6;
+  ctx.fillStyle = COLORS.hiveRed; ctx.font = `${sz}px ${META_FONT}`; ctx.textBaseline = "bottom";
+  ctx.fillText(meta.toUpperCase(), pad, bottom);
+}
+
+function drawLogoMark(ctx, x, cy, size, color) {
+  const arrowH = size * 0.42, headD = size * 0.30, lw = Math.max(1.5, size * 0.085);
+  ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.lineCap = "butt"; ctx.lineJoin = "miter";
+  ctx.beginPath(); ctx.moveTo(x + headD, cy - arrowH/2); ctx.lineTo(x, cy); ctx.lineTo(x + headD, cy + arrowH/2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x + lw/2, cy); ctx.lineTo(x + size - lw/2, cy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x + size - headD, cy - arrowH/2); ctx.lineTo(x + size, cy); ctx.lineTo(x + size - headD, cy + arrowH/2); ctx.stroke();
+  ctx.restore();
+}
+function drawLogo(ctx, w, h, theme) {
+  const color = theme === "Dark Navy" ? COLORS.white : COLORS.darkNavy;
+  const pad   = Math.round(w * 0.072);
+  const logoH = Math.round(w * 0.047);
+  const markW = Math.round(logoH * 1.15);
+  const gap   = Math.round(logoH * 0.45);
+  const cy    = h - pad - logoH / 2;
+  drawLogoMark(ctx, pad, cy, markW, color);
+  ctx.fillStyle = color; ctx.font = `${Math.round(logoH * 0.92)}px ${FONT_FAMILY}`; ctx.textBaseline = "middle";
+  ctx.fillText("HIVE", pad + markW + gap, cy);
+}
+
+// ─── Font ─────────────────────────────────────────────────────────────────
+
+let fontReady = false;
+async function ensureFont() {
+  if (fontReady) return;
+  try {
+    const f = new FontFace("APK Galeria", "url(fonts/APKGaleria-Regular.woff2) format('woff2')");
+    await f.load();
+    document.fonts.add(f);
+    fontReady = true;
+  } catch (_) {}
+}
+
+// ─── State & UI ───────────────────────────────────────────────────────────
+
+let theme = "Dark Navy";
+let offscreen = null;
+let renderTimer = null;
+
+// Segmented theme control
+document.getElementById("themeSeg").addEventListener("click", e => {
+  const btn = e.target.closest(".seg-btn");
+  if (!btn) return;
+  document.querySelectorAll("#themeSeg .seg-btn").forEach(b => b.classList.remove("on"));
+  btn.classList.add("on");
+  theme = btn.dataset.val;
+  scheduleRender();
+});
+
+// Range display
+[["rectSize", "rectSizeVal", v => v], ["density", "densityVal", v => parseFloat(v).toFixed(2)],
+ ["rectAspect", "rectAspectVal", v => parseFloat(v).toFixed(1)]].forEach(([id, valId, fmt]) => {
+  const el = document.getElementById(id);
+  const vl = document.getElementById(valId);
+  el.addEventListener("input", () => { vl.textContent = fmt(el.value); scheduleRender(); });
+});
+
+// Other controls
+["format", "shape", "seed"].forEach(id =>
+  document.getElementById(id).addEventListener("change", scheduleRender));
+["title", "subheading", "meta"].forEach(id =>
+  document.getElementById(id).addEventListener("input", scheduleRender));
+
+document.getElementById("randBtn").addEventListener("click", () => {
+  document.getElementById("seed").value = Math.floor(Math.random() * 9999) + 1;
+  scheduleRender();
+});
+document.getElementById("refreshBtn").addEventListener("click", () => render());
+document.getElementById("exportBtn").addEventListener("click", exportImage);
+
+// ─── Render ───────────────────────────────────────────────────────────────
+
+function scheduleRender() {
+  clearTimeout(renderTimer);
+  renderTimer = setTimeout(render, 120);
+}
+
+async function render() {
+  const spinner = document.getElementById("spinner");
+  spinner.classList.add("visible");
+
+  const fmt       = document.getElementById("format").value;
+  const shape     = document.getElementById("shape").value;
+  const rectSize  = parseFloat(document.getElementById("rectSize").value);
+  const rectAspect= parseFloat(document.getElementById("rectAspect").value);
+  const density   = parseFloat(document.getElementById("density").value);
+  const seed      = parseInt(document.getElementById("seed").value) || 1;
+  const title     = document.getElementById("title").value;
+  const subheading= document.getElementById("subheading").value;
+  const meta      = document.getElementById("meta").value;
+
+  const { width, height } = FORMATS[fmt];
+
+  await ensureFont();
+
+  // Full-res offscreen canvas
+  if (!offscreen) offscreen = document.createElement("canvas");
+  offscreen.width  = width;
+  offscreen.height = height;
+  const ctx = offscreen.getContext("2d");
+
+  const { rectW, rectH, cellW, cellH, cols, rows } = computeCells(width, height, rectSize, rectAspect);
+  const rng   = makeRng(seed);
+  const cells = buildCells(cols, rows, shape, density, rng);
+  const color = theme === "Dark Navy" ? COLORS.white : COLORS.darkNavy;
+
+  drawBg(ctx, width, height, theme);
+  drawPixels(ctx, width, height, cells, cols, rows, cellW, cellH, rectW, rectH, color);
+  drawTitle(ctx, width, height, title, theme);
+  drawSubheading(ctx, width, height, subheading, title, theme);
+  drawMeta(ctx, width, height, meta);
+  drawLogo(ctx, width, height, theme);
+
+  // Scale to preview canvas
+  const preview = document.getElementById("preview");
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const dispW = preview.parentElement.clientWidth;
+  const dispH = Math.round(height * dispW / width);
+  preview.width  = dispW * dpr;
+  preview.height = dispH * dpr;
+  preview.style.width  = dispW + "px";
+  preview.style.height = dispH + "px";
+  const pCtx = preview.getContext("2d");
+  pCtx.scale(dpr, dpr);
+  pCtx.drawImage(offscreen, 0, 0, dispW, dispH);
+
+  spinner.classList.remove("visible");
+}
+
+// ─── Export ───────────────────────────────────────────────────────────────
+
+function exportImage() {
+  if (!offscreen) { render().then(exportImage); return; }
+
+  const url = offscreen.toDataURL("image/png");
+
+  // iOS Safari doesn't honour <a download>, so open in new tab for long-press save
+  const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent);
+  if (isIOS) {
+    const w = window.open("", "_blank");
+    if (w) {
+      w.document.write(
+        '<!DOCTYPE html><html><head>' +
+        '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+        '<title>HIVE Ad</title>' +
+        '<style>body{margin:0;background:#000;display:flex;flex-direction:column;align-items:center;' +
+        'justify-content:center;min-height:100dvh;gap:16px;font-family:sans-serif}' +
+        'img{max-width:100%;max-height:80dvh;display:block}' +
+        'p{color:rgba(255,255,255,.55);font-size:13px;padding:0 20px;text-align:center}</style>' +
+        '</head><body>' +
+        '<img src="' + url + '">' +
+        '<p>Press and hold the image, then tap <strong style="color:#fff">Save to Photos</strong></p>' +
+        '</body></html>'
+      );
+      w.document.close();
+    }
+    return;
+  }
+
+  const a = document.createElement("a");
+  a.download = "hive-ad.png";
+  a.href = url;
+  a.click();
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────
+
+render();
+</script>
+
+</body>
+</html>
