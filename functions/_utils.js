@@ -293,8 +293,7 @@ export async function loadFont() {
   try {
     const font = new FontFace(
       "APK Galeria",
-      "url(/static/fonts/APKGaleria-Regular.woff2) format('woff2')," +
-      "url(/static/fonts/APKGaleria-Regular.woff) format('woff')"
+      "url(/static/fonts/APKGaleria-Regular.woff2) format('woff2')"
     );
     await font.load();
     document.fonts.add(font);

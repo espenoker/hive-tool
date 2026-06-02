@@ -29,10 +29,9 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Restore font files from secrets
+      - name: Restore font file from secret
         run: |
           echo "${{ secrets.FONT_APK_GALERIA_WOFF2 }}" | base64 --decode > static/fonts/APKGaleria-Regular.woff2
-          echo "${{ secrets.FONT_APK_GALERIA_WOFF }}"  | base64 --decode > static/fonts/APKGaleria-Regular.woff
 
       - name: Install dependencies
         run: npm install
