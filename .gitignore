@@ -3,4 +3,5 @@ dist/
 .DS_Store
 
 # Font files are injected via CI secrets to protect the license
+static/fonts/*.woff
 static/fonts/*.woff2
