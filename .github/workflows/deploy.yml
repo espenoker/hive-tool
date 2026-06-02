@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - claude/social-ad-format-generator-pfdBV  # remove after merging to main
+  workflow_dispatch:
 
 permissions:
   contents: read
