@@ -2,7 +2,7 @@
 
 const COLORS = {
   darkNavy:      "#2F3D48",
-  hiveRed:       "#E61A1B", // TODO: confirm exact hex with brand team
+  hiveRed:       "#FF371C",
   darkBlueIce:   "#CDDDE6",
   blueIce:       "#E1EAED",
   lightBlueIce:  "#F2F6F7",
