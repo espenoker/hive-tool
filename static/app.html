@@ -20,6 +20,7 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+      font-feature-settings: 'ss03' on;
       background: var(--navy);
       color: #fff;
     }
@@ -80,6 +81,28 @@
       transition: opacity 0.1s;
     }
     .preview-spinner.visible { opacity: 1; }
+
+    .play-btn {
+      position: absolute;
+      bottom: 14px;
+      right: 14px;
+      width: 46px; height: 46px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.55);
+      border: 1.5px solid rgba(255,255,255,0.25);
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+    .play-btn:hover { background: rgba(0,0,0,0.75); }
+    .play-btn.playing { border-color: var(--red); }
     .spinner {
       width: 26px; height: 26px;
       border: 2px solid rgba(255,255,255,0.18);
@@ -444,6 +467,7 @@ Limitless.</textarea>
     <div class="preview-wrap" id="previewWrap">
       <canvas id="preview"></canvas>
       <div class="preview-spinner" id="spinner"><div class="spinner"></div></div>
+      <button class="play-btn" id="playBtn" title="Play / Pause">&#9654;</button>
     </div>
 
   </div><!-- /body-row -->
@@ -631,16 +655,91 @@ let fontReady = false;
 async function ensureFont() {
   if (fontReady) return;
   try {
-    const f = new FontFace("APK Galeria", "url(fonts/APKGaleria-Regular.woff2) format('woff2')");
+    const f = new FontFace(
+      "APK Galeria",
+      "url(fonts/APKGaleria-Regular.woff2) format('woff2')",
+      { featureSettings: '"ss03" 1' }
+    );
     await f.load(); document.fonts.add(f); fontReady = true;
   } catch (_) {}
 }
 
 // ─── State ────────────────────────────────────────────────────────────────
 
-let theme = "Dark Navy";
-let offscreen = null;
+let theme       = "Dark Navy";
+let offscreen   = null;
 let renderTimer = null;
+let currentSetup = null;
+
+// ─── Animation state ──────────────────────────────────────────────────────
+
+let animating    = false;
+let animRafId    = null;
+let animStarted  = null;
+
+function drawLogoSync(ctx, w, h, theme) {
+  const color = theme === "Dark Navy" ? "#FFFFFF" : "#2F3D48";
+  const pad   = Math.round(w * 0.072);
+  const logoH = Math.round(w * 0.047);
+  const logoW = Math.round(logoH * (1027.81 / 203.21));
+  const img   = _logoCache[color];
+  if (img) ctx.drawImage(img, pad, h - pad - logoH, logoW, logoH);
+}
+
+function updatePreview() {
+  if (!offscreen) return;
+  const preview = document.getElementById("preview");
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const pCtx = preview.getContext("2d");
+  pCtx.setTransform(1, 0, 0, 1, 0, 0);
+  pCtx.scale(dpr, dpr);
+  const dispW = parseInt(preview.style.width);
+  const dispH = parseInt(preview.style.height);
+  pCtx.drawImage(offscreen, 0, 0, dispW, dispH);
+}
+
+function drawAnimFrame(t) {
+  if (!currentSetup || !offscreen) return;
+  const { width, height, cells, cols, rows, cellW, cellH, rectW, rectH, color, title, subheading, meta } = currentSetup;
+  const ctx = offscreen.getContext("2d");
+  ctx.clearRect(0, 0, width, height);
+  drawBg(ctx, width, height, theme);
+  drawPixels(ctx, width, height, cells, cols, rows, cellW, cellH, rectW, rectH, color, t);
+  drawTitle(ctx, width, height, title, theme);
+  drawSubheading(ctx, width, height, subheading, title, theme);
+  drawMeta(ctx, width, height, meta);
+  drawLogoSync(ctx, width, height, theme);
+  updatePreview();
+}
+
+function startAnimation() {
+  if (!currentSetup) return;
+  animating   = true;
+  animStarted = null;
+  document.getElementById("playBtn").classList.add("playing");
+  document.getElementById("playBtn").innerHTML = "&#9646;&#9646;";
+  const dur = parseInt(document.getElementById("duration").value);
+
+  function loop(ts) {
+    if (!animating) return;
+    if (!animStarted) animStarted = ts;
+    const t = ((ts - animStarted) / 1000 / dur) % 1;
+    drawAnimFrame(t);
+    animRafId = requestAnimationFrame(loop);
+  }
+  animRafId = requestAnimationFrame(loop);
+}
+
+function stopAnimation() {
+  animating = false;
+  if (animRafId) { cancelAnimationFrame(animRafId); animRafId = null; }
+  document.getElementById("playBtn").classList.remove("playing");
+  document.getElementById("playBtn").innerHTML = "&#9654;";
+}
+
+document.getElementById("playBtn").addEventListener("click", () => {
+  if (animating) stopAnimation(); else startAnimation();
+});
 
 // Theme segmented control
 document.getElementById("themeSeg").addEventListener("click", e => {
@@ -687,6 +786,7 @@ function scheduleRender() {
 }
 
 async function render() {
+  stopAnimation();
   document.getElementById("spinner").classList.add("visible");
 
   const fmt        = document.getElementById("format").value;
@@ -712,43 +812,36 @@ async function render() {
   const cells = buildCells(cols, rows, shape, density, rng);
   const color = theme === "Dark Navy" ? COLORS.white : COLORS.darkNavy;
 
+  currentSetup = { width, height, cells, cols, rows, cellW, cellH, rectW, rectH, color, title, subheading, meta };
+
   drawBg(ctx, width, height, theme);
-  drawPixels(ctx, width, height, cells, cols, rows, cellW, cellH, rectW, rectH, color);
+  drawPixels(ctx, width, height, cells, cols, rows, cellW, cellH, rectW, rectH, color, 0);
   drawTitle(ctx, width, height, title, theme);
   drawSubheading(ctx, width, height, subheading, title, theme);
   drawMeta(ctx, width, height, meta);
   await drawLogo(ctx, width, height, theme);
 
-  // Paint to scaled preview canvas
-  const preview = document.getElementById("preview");
-  const wrap    = document.getElementById("previewWrap");
-  const dpr     = Math.min(window.devicePixelRatio || 1, 2);
+  // Size the preview canvas to fit its container
+  const preview   = document.getElementById("preview");
+  const wrap      = document.getElementById("previewWrap");
+  const dpr       = Math.min(window.devicePixelRatio || 1, 2);
   const isDesktop = window.innerWidth >= 800;
-
   let dispW, dispH;
   if (isDesktop) {
-    // Fit inside the available panel space with padding
-    const padPx = 56; // 2 × 28px padding
-    const maxW = wrap.clientWidth  - padPx;
-    const maxH = wrap.clientHeight - padPx;
-    const scale = Math.min(maxW / width, maxH / height, 1);
+    const padPx = 56;
+    const scale = Math.min((wrap.clientWidth - padPx) / width, (wrap.clientHeight - padPx) / height, 1);
     dispW = Math.round(width  * scale);
     dispH = Math.round(height * scale);
-    preview.style.width  = dispW + "px";
-    preview.style.height = dispH + "px";
   } else {
     dispW = wrap.clientWidth;
     dispH = Math.round(height * dispW / width);
-    preview.style.width  = dispW + "px";
-    preview.style.height = dispH + "px";
   }
-
+  preview.style.width  = dispW + "px";
+  preview.style.height = dispH + "px";
   preview.width  = Math.round(dispW * dpr);
   preview.height = Math.round(dispH * dpr);
-  const pCtx = preview.getContext("2d");
-  pCtx.scale(dpr, dpr);
-  pCtx.drawImage(offscreen, 0, 0, dispW, dispH);
 
+  updatePreview();
   document.getElementById("spinner").classList.remove("visible");
 }
 
