@@ -6,30 +6,38 @@
   <title>HIVE Ad Generator</title>
   <style>
     :root {
-      --navy:  #2F3D48;
-      --red:   #FF371C;
-      --ice:   #CDDDE6;
-      --light: #F2F6F7;
-      --glass: rgba(255,255,255,0.07);
+      --navy:   #2F3D48;
+      --red:    #FF371C;
+      --ice:    #CDDDE6;
+      --light:  #F2F6F7;
+      --glass:  rgba(255,255,255,0.07);
       --border: rgba(255,255,255,0.12);
+      --sidebar-w: 340px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    html, body { height: 100%; }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
       background: var(--navy);
       color: #fff;
-      min-height: 100dvh;
-      padding-bottom: env(safe-area-inset-bottom, 0);
     }
 
-    /* ── Header ── */
+    /* ── Layout shell ── */
+    .shell {
+      display: flex;
+      flex-direction: column;
+      min-height: 100dvh;
+    }
+
     header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 16px 20px 12px;
+      padding: 14px 20px;
       border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
     }
     .logo {
       font-size: 15px;
@@ -37,12 +45,18 @@
       letter-spacing: 0.18em;
     }
     .logo span { color: var(--red); }
+    .header-sub {
+      font-size: 11px;
+      color: rgba(255,255,255,0.35);
+      letter-spacing: .08em;
+    }
 
-    /* ── Preview ── */
+    /* ── Mobile: preview on top, controls below ── */
     .preview-wrap {
       position: relative;
       width: 100%;
-      background: #1a242c;
+      background: #161f27;
+      border-bottom: 1px solid var(--border);
     }
     #preview {
       display: block;
@@ -55,60 +69,64 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(0,0,0,0.35);
+      background: rgba(0,0,0,0.3);
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.15s;
+      transition: opacity 0.1s;
     }
     .preview-spinner.visible { opacity: 1; }
     .spinner {
-      width: 28px; height: 28px;
-      border: 2px solid rgba(255,255,255,0.2);
+      width: 26px; height: 26px;
+      border: 2px solid rgba(255,255,255,0.18);
       border-top-color: #fff;
       border-radius: 50%;
-      animation: spin 0.7s linear infinite;
+      animation: spin 0.65s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Controls ── */
+    .body-row {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    /* Sidebar (controls) */
+    .sidebar {
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
     .controls {
       padding: 20px;
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 18px;
     }
-
-    .group {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
+    .group { display: flex; flex-direction: column; gap: 11px; }
     .group-title {
       font-size: 10px;
       font-weight: 600;
       letter-spacing: 0.14em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.4);
+      color: rgba(255,255,255,0.38);
     }
-
     label {
       font-size: 12px;
       font-weight: 500;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.05em;
       color: var(--ice);
       display: block;
-      margin-bottom: 6px;
+      margin-bottom: 5px;
     }
-
     input[type="text"],
     input[type="number"],
     textarea,
     select {
       width: 100%;
-      padding: 11px 14px;
+      padding: 10px 13px;
       background: var(--glass);
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-radius: 9px;
       color: #fff;
       font-size: 15px;
       -webkit-appearance: none;
@@ -119,242 +137,284 @@
     input[type="number"]:focus,
     textarea:focus,
     select:focus {
-      border-color: rgba(255,255,255,0.3);
+      border-color: rgba(255,255,255,0.28);
       background: rgba(255,255,255,0.1);
     }
     textarea {
-      height: 76px;
+      height: 72px;
       resize: none;
       font-family: inherit;
       line-height: 1.45;
     }
     select {
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='rgba(255,255,255,0.5)'/%3E%3C/svg%3E");
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='rgba(255,255,255,0.45)'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
-      background-position: right 14px center;
-      padding-right: 36px;
+      background-position: right 13px center;
+      padding-right: 34px;
+      cursor: pointer;
     }
     option { background: #2F3D48; }
 
-    /* ── Segmented control ── */
+    /* Segmented control */
     .seg {
       display: flex;
       background: var(--glass);
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-radius: 9px;
       overflow: hidden;
     }
     .seg-btn {
       flex: 1;
-      padding: 10px 4px;
+      padding: 9px 4px;
       font-size: 13px;
       font-weight: 500;
       text-align: center;
       cursor: pointer;
       border: none;
       background: transparent;
-      color: rgba(255,255,255,0.55);
-      transition: all 0.15s;
+      color: rgba(255,255,255,0.5);
+      transition: all 0.13s;
       border-right: 1px solid var(--border);
     }
     .seg-btn:last-child { border-right: none; }
-    .seg-btn.on {
-      background: var(--red);
-      color: #fff;
-    }
+    .seg-btn.on { background: var(--red); color: #fff; }
 
-    /* ── Range slider ── */
-    .range-wrap { display: flex; align-items: center; gap: 12px; }
+    /* Range */
     input[type="range"] {
-      flex: 1;
       -webkit-appearance: none;
+      width: 100%;
       height: 3px;
-      background: var(--border);
+      background: rgba(255,255,255,0.18);
       border-radius: 2px;
       outline: none;
       cursor: pointer;
+      margin-top: 4px;
     }
     input[type="range"]::-webkit-slider-thumb {
       -webkit-appearance: none;
-      width: 22px; height: 22px;
+      width: 20px; height: 20px;
       border-radius: 50%;
       background: #fff;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.35);
-    }
-    input[type="range"]::-webkit-slider-runnable-track {
-      height: 3px;
-      border-radius: 2px;
-    }
-    .range-val {
-      font-size: 13px;
-      color: rgba(255,255,255,0.5);
-      min-width: 36px;
-      text-align: right;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
     }
 
-    /* ── Seed row ── */
+    /* Seed row */
     .seed-row { display: flex; gap: 8px; }
     .seed-row input { flex: 1; }
     .icon-btn {
-      padding: 0 14px;
+      padding: 0 13px;
       background: var(--glass);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      color: rgba(255,255,255,0.7);
-      font-size: 20px;
+      border-radius: 9px;
+      color: rgba(255,255,255,0.65);
+      font-size: 19px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
+      flex-shrink: 0;
     }
-
-    /* ── Action buttons ── */
-    .actions {
-      padding: 0 20px 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .btn {
-      display: block;
-      width: 100%;
-      padding: 15px;
-      border: none;
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: 600;
-      letter-spacing: 0.04em;
-      cursor: pointer;
-      text-align: center;
-      -webkit-appearance: none;
-    }
-    .btn:active { opacity: 0.82; transform: scale(0.99); }
-    .btn-primary { background: var(--red); color: #fff; }
-    .btn-secondary {
-      background: var(--glass);
-      border: 1px solid var(--border);
-      color: rgba(255,255,255,0.7);
-    }
+    .icon-btn:hover { background: rgba(255,255,255,0.12); }
 
     hr {
       border: none;
       border-top: 1px solid var(--border);
     }
+
+    /* Action buttons */
+    .actions {
+      padding: 16px 20px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 11px;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      text-align: center;
+      -webkit-appearance: none;
+      transition: opacity 0.12s, transform 0.1s;
+    }
+    .btn:active { opacity: 0.8; transform: scale(0.985); }
+    .btn-primary { background: var(--red); color: #fff; }
+    .btn-secondary {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      color: rgba(255,255,255,0.65);
+    }
+
+    /* ══════════════════════════════════════════
+       Desktop: side-by-side layout
+       ══════════════════════════════════════════ */
+    @media (min-width: 800px) {
+      body { overflow: hidden; }
+
+      .shell { height: 100vh; overflow: hidden; }
+
+      header { padding: 16px 28px; }
+
+      .body-row {
+        flex-direction: row;
+        flex: 1;
+        overflow: hidden;
+      }
+
+      /* Left panel: fixed-width scrollable sidebar */
+      .sidebar {
+        width: var(--sidebar-w);
+        flex-shrink: 0;
+        border-right: 1px solid var(--border);
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+      }
+      .controls { flex: 1; }
+      .actions { margin-top: auto; }
+
+      /* Right panel: preview fills remaining space */
+      .preview-wrap {
+        flex: 1;
+        border-bottom: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        padding: 28px;
+      }
+      #preview {
+        width: auto;
+        height: auto;
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        border-radius: 4px;
+        box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+      }
+    }
+
+    @media (min-width: 1100px) {
+      :root { --sidebar-w: 380px; }
+    }
   </style>
 </head>
 <body>
+<div class="shell">
 
-<header>
-  <div class="logo">HIVE<span>.</span></div>
-  <div style="font-size:11px;color:rgba(255,255,255,0.35);letter-spacing:.08em">AD GENERATOR</div>
-</header>
+  <header>
+    <div class="logo">HIVE<span>.</span></div>
+    <div class="header-sub">AD GENERATOR</div>
+  </header>
 
-<!-- Live preview -->
-<div class="preview-wrap">
-  <canvas id="preview"></canvas>
-  <div class="preview-spinner" id="spinner"><div class="spinner"></div></div>
-</div>
+  <div class="body-row">
 
-<div class="controls">
+    <!-- Left / top: controls -->
+    <div class="sidebar">
+      <div class="controls">
 
-  <!-- Format & Theme -->
-  <div class="group">
-    <div class="group-title">Format & Theme</div>
-    <div>
-      <label>Format</label>
-      <select id="format">
-        <option>Instagram Square</option>
-        <option>Instagram Story</option>
-        <option>Instagram Landscape</option>
-        <option>LinkedIn Post</option>
-        <option>LinkedIn Square</option>
-      </select>
-    </div>
-    <div>
-      <label>Theme</label>
-      <div class="seg" id="themeSeg">
-        <button class="seg-btn on" data-val="Dark Navy">Dark Navy</button>
-        <button class="seg-btn" data-val="Light Ice">Light Ice</button>
-      </div>
-    </div>
-  </div>
+        <div class="group">
+          <div class="group-title">Format & Theme</div>
+          <div>
+            <label>Format</label>
+            <select id="format">
+              <option>Instagram Square</option>
+              <option>Instagram Story</option>
+              <option>Instagram Landscape</option>
+              <option>LinkedIn Post</option>
+              <option>LinkedIn Square</option>
+            </select>
+          </div>
+          <div>
+            <label>Theme</label>
+            <div class="seg" id="themeSeg">
+              <button class="seg-btn on" data-val="Dark Navy">Dark Navy</button>
+              <button class="seg-btn" data-val="Light Ice">Light Ice</button>
+            </div>
+          </div>
+        </div>
 
-  <hr>
+        <hr>
 
-  <!-- Content -->
-  <div class="group">
-    <div class="group-title">Content</div>
-    <div>
-      <label>Title</label>
-      <textarea id="title">A new era of work.
+        <div class="group">
+          <div class="group-title">Content</div>
+          <div>
+            <label>Title</label>
+            <textarea id="title">A new era of work.
 Limitless.</textarea>
-    </div>
-    <div>
-      <label>Subheading</label>
-      <input type="text" id="subheading" placeholder="Optional">
-    </div>
-    <div>
-      <label>Meta</label>
-      <input type="text" id="meta" value="[INDUSTRIAL MACHINE INTELLIGENCE]">
-    </div>
-  </div>
+          </div>
+          <div>
+            <label>Subheading</label>
+            <input type="text" id="subheading" placeholder="Optional">
+          </div>
+          <div>
+            <label>Meta</label>
+            <input type="text" id="meta" value="[INDUSTRIAL MACHINE INTELLIGENCE]">
+          </div>
+        </div>
 
-  <hr>
+        <hr>
 
-  <!-- Pattern -->
-  <div class="group">
-    <div class="group-title">Pattern</div>
-    <div>
-      <label>Shape</label>
-      <select id="shape">
-        <option>Wave</option>
-        <option>Arc</option>
-        <option>Circle</option>
-        <option>Diagonal</option>
-        <option>Cloud</option>
-      </select>
-    </div>
-    <div>
-      <label>Pixel size — <span id="rectSizeVal">18</span></label>
-      <div class="range-wrap">
-        <input type="range" id="rectSize" min="4" max="60" step="1" value="18">
+        <div class="group">
+          <div class="group-title">Pattern</div>
+          <div>
+            <label>Shape</label>
+            <select id="shape">
+              <option>Wave</option>
+              <option>Arc</option>
+              <option>Circle</option>
+              <option>Diagonal</option>
+              <option>Cloud</option>
+            </select>
+          </div>
+          <div>
+            <label>Pixel size — <span id="rectSizeVal">18</span></label>
+            <input type="range" id="rectSize" min="4" max="60" step="1" value="18">
+          </div>
+          <div>
+            <label>Density — <span id="densityVal">0.70</span></label>
+            <input type="range" id="density" min="0.1" max="1.0" step="0.05" value="0.7">
+          </div>
+          <div>
+            <label>Aspect ratio — <span id="rectAspectVal">2.3</span></label>
+            <input type="range" id="rectAspect" min="1.0" max="5.0" step="0.1" value="2.3">
+          </div>
+        </div>
+
+        <hr>
+
+        <div class="group">
+          <div class="group-title">Variation</div>
+          <div>
+            <label>Seed</label>
+            <div class="seed-row">
+              <input type="number" id="seed" value="1" min="1" max="9999">
+              <button class="icon-btn" id="randBtn" title="Randomise">&#8635;</button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /controls -->
+
+      <div class="actions">
+        <button class="btn btn-primary" id="exportBtn">Export Image</button>
+        <button class="btn btn-secondary" id="refreshBtn">Refresh Preview</button>
       </div>
-    </div>
-    <div>
-      <label>Density — <span id="densityVal">0.70</span></label>
-      <div class="range-wrap">
-        <input type="range" id="density" min="0.1" max="1.0" step="0.05" value="0.7">
-      </div>
-    </div>
-    <div>
-      <label>Aspect ratio — <span id="rectAspectVal">2.3</span></label>
-      <div class="range-wrap">
-        <input type="range" id="rectAspect" min="1.0" max="5.0" step="0.1" value="2.3">
-      </div>
-    </div>
-  </div>
+    </div><!-- /sidebar -->
 
-  <hr>
-
-  <!-- Seed -->
-  <div class="group">
-    <div class="group-title">Variation</div>
-    <div>
-      <label>Seed</label>
-      <div class="seed-row">
-        <input type="number" id="seed" value="1" min="1" max="9999">
-        <button class="icon-btn" id="randBtn" title="Randomise">&#8635;</button>
-      </div>
+    <!-- Right / bottom: live preview -->
+    <div class="preview-wrap" id="previewWrap">
+      <canvas id="preview"></canvas>
+      <div class="preview-spinner" id="spinner"><div class="spinner"></div></div>
     </div>
-  </div>
 
-</div>
-
-<!-- Action buttons -->
-<div class="actions">
-  <button class="btn btn-primary" id="exportBtn">Export Image</button>
-  <button class="btn btn-secondary" id="refreshBtn">Refresh Preview</button>
-</div>
+  </div><!-- /body-row -->
+</div><!-- /shell -->
 
 <script>
 // ─── Brand tokens ─────────────────────────────────────────────────────────
@@ -391,32 +451,23 @@ function makeRng(seed) {
 // ─── Density maps ─────────────────────────────────────────────────────────
 
 function waveDensity(col, row, cols, rows) {
-  const x = col / Math.max(1, cols - 1);
-  const y = row / Math.max(1, rows - 1);
-  const centerY = 0.52 + 0.22 * Math.sin(x * Math.PI * 2.8);
-  const dist = Math.abs(y - centerY);
-  if (dist > 0.24) return 0;
-  return Math.pow(1 - dist / 0.24, 0.6);
+  const x = col / Math.max(1, cols - 1), y = row / Math.max(1, rows - 1);
+  const dist = Math.abs(y - (0.52 + 0.22 * Math.sin(x * Math.PI * 2.8)));
+  return dist > 0.24 ? 0 : Math.pow(1 - dist / 0.24, 0.6);
 }
 function arcDensity(col, row, cols, rows) {
   const dist = Math.sqrt((col - cols) ** 2 + (row - rows) ** 2);
   const outerR = cols * 0.88, innerR = cols * 0.42;
-  if (dist < innerR || dist > outerR) return 0;
-  return Math.sin(((dist - innerR) / (outerR - innerR)) * Math.PI);
+  return (dist < innerR || dist > outerR) ? 0 : Math.sin(((dist - innerR) / (outerR - innerR)) * Math.PI);
 }
 function circleDensity(col, row, cols, rows) {
-  const cx = cols * 0.62, cy = rows * 0.54;
-  const dist = Math.sqrt((col - cx) ** 2 + (row - cy) ** 2);
-  const radius = Math.min(cols, rows) * 0.44;
-  if (dist > radius) return 0;
-  return Math.pow(1 - dist / radius, 0.35);
+  const dist = Math.sqrt((col - cols * 0.62) ** 2 + (row - rows * 0.54) ** 2);
+  const r = Math.min(cols, rows) * 0.44;
+  return dist > r ? 0 : Math.pow(1 - dist / r, 0.35);
 }
 function diagonalDensity(col, row, cols, rows) {
-  const x = col / Math.max(1, cols - 1);
-  const y = row / Math.max(1, rows - 1);
-  const dist = Math.abs(x + y - 1.1);
-  if (dist > 0.28) return 0;
-  return Math.pow(1 - dist / 0.28, 0.55);
+  const dist = Math.abs(col / Math.max(1, cols - 1) + row / Math.max(1, rows - 1) - 1.1);
+  return dist > 0.28 ? 0 : Math.pow(1 - dist / 0.28, 0.55);
 }
 function cloudDensity(col, row, cols, rows) {
   return Math.pow(col / Math.max(1, cols - 1), 0.55) * Math.pow(row / Math.max(1, rows - 1), 0.55);
@@ -438,9 +489,9 @@ function computeCells(width, height, rectSize, rectAspect) {
   const rectH = Math.max(2, Math.round(rectSize / rectAspect));
   const cellW = rectW + Math.round(rectW * 0.18);
   const cellH = rectH + Math.round(rectH * 0.5);
-  const cols  = Math.ceil(width  / cellW) + 1;
-  const rows  = Math.ceil(height / cellH) + 1;
-  return { rectW, rectH, cellW, cellH, cols, rows };
+  return { rectW, rectH, cellW, cellH,
+    cols: Math.ceil(width  / cellW) + 1,
+    rows: Math.ceil(height / cellH) + 1 };
 }
 function buildCells(cols, rows, shape, density, rng) {
   const cells = new Float32Array(cols * rows * 3);
@@ -458,14 +509,11 @@ function buildCells(cols, rows, shape, density, rng) {
 
 function drawBg(ctx, w, h, theme) {
   if (theme === "Dark Navy") {
-    ctx.fillStyle = COLORS.darkNavy;
-    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = COLORS.darkNavy; ctx.fillRect(0, 0, w, h);
   } else {
     const g = ctx.createLinearGradient(0, 0, w * 0.6, h);
-    g.addColorStop(0, COLORS.lightBlueIce);
-    g.addColorStop(1, COLORS.darkBlueIce);
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, w, h);
+    g.addColorStop(0, COLORS.lightBlueIce); g.addColorStop(1, COLORS.darkBlueIce);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
   }
 }
 
@@ -486,9 +534,7 @@ function drawPixels(ctx, w, h, cells, cols, rows, cellW, cellH, rectW, rectH, co
 
 function drawTitle(ctx, w, h, title, theme) {
   const color = theme === "Dark Navy" ? COLORS.white : COLORS.darkNavy;
-  const pad   = Math.round(w * 0.072);
-  const sz    = Math.round(w * 0.082);
-  const lineH = Math.round(sz * 1.07);
+  const pad = Math.round(w * 0.072), sz = Math.round(w * 0.082), lineH = Math.round(sz * 1.07);
   ctx.fillStyle = color; ctx.font = `${sz}px ${FONT_FAMILY}`; ctx.textBaseline = "top";
   title.split("\n").forEach((line, i) => { if (line) ctx.fillText(line, pad, pad + i * lineH); });
 }
@@ -496,25 +542,20 @@ function drawTitle(ctx, w, h, title, theme) {
 function drawSubheading(ctx, w, h, sub, title, theme) {
   if (!sub) return;
   const color = theme === "Dark Navy" ? COLORS.white : COLORS.darkNavy;
-  const pad   = Math.round(w * 0.072);
-  const sz    = Math.round(w * 0.082);
-  const nLines = title.split("\n").filter(Boolean).length;
-  const afterTitle = pad + nLines * Math.round(sz * 1.07);
+  const pad = Math.round(w * 0.072), sz = Math.round(w * 0.082);
+  const afterTitle = pad + title.split("\n").filter(Boolean).length * Math.round(sz * 1.07);
   const subSz = Math.round(w * 0.028);
-  ctx.globalAlpha = 0.7;
-  ctx.fillStyle = color; ctx.font = `${subSz}px ${FONT_FAMILY}`; ctx.textBaseline = "top";
+  ctx.globalAlpha = 0.7; ctx.fillStyle = color;
+  ctx.font = `${subSz}px ${FONT_FAMILY}`; ctx.textBaseline = "top";
   ctx.fillText(sub, pad, afterTitle + Math.round(subSz * 0.7));
   ctx.globalAlpha = 1;
 }
 
 function drawMeta(ctx, w, h, meta) {
   if (!meta) return;
-  const pad    = Math.round(w * 0.072);
-  const sz     = Math.round(w * 0.021);
-  const logoH  = Math.round(w * 0.047);
-  const bottom = h - pad - logoH * 2.6;
+  const pad = Math.round(w * 0.072), sz = Math.round(w * 0.021), logoH = Math.round(w * 0.047);
   ctx.fillStyle = COLORS.hiveRed; ctx.font = `${sz}px ${META_FONT}`; ctx.textBaseline = "bottom";
-  ctx.fillText(meta.toUpperCase(), pad, bottom);
+  ctx.fillText(meta.toUpperCase(), pad, h - pad - logoH * 2.6);
 }
 
 function drawLogoMark(ctx, x, cy, size, color) {
@@ -527,11 +568,9 @@ function drawLogoMark(ctx, x, cy, size, color) {
 }
 function drawLogo(ctx, w, h, theme) {
   const color = theme === "Dark Navy" ? COLORS.white : COLORS.darkNavy;
-  const pad   = Math.round(w * 0.072);
-  const logoH = Math.round(w * 0.047);
-  const markW = Math.round(logoH * 1.15);
-  const gap   = Math.round(logoH * 0.45);
-  const cy    = h - pad - logoH / 2;
+  const pad = Math.round(w * 0.072), logoH = Math.round(w * 0.047);
+  const markW = Math.round(logoH * 1.15), gap = Math.round(logoH * 0.45);
+  const cy = h - pad - logoH / 2;
   drawLogoMark(ctx, pad, cy, markW, color);
   ctx.fillStyle = color; ctx.font = `${Math.round(logoH * 0.92)}px ${FONT_FAMILY}`; ctx.textBaseline = "middle";
   ctx.fillText("HIVE", pad + markW + gap, cy);
@@ -544,19 +583,17 @@ async function ensureFont() {
   if (fontReady) return;
   try {
     const f = new FontFace("APK Galeria", "url(fonts/APKGaleria-Regular.woff2) format('woff2')");
-    await f.load();
-    document.fonts.add(f);
-    fontReady = true;
+    await f.load(); document.fonts.add(f); fontReady = true;
   } catch (_) {}
 }
 
-// ─── State & UI ───────────────────────────────────────────────────────────
+// ─── State ────────────────────────────────────────────────────────────────
 
 let theme = "Dark Navy";
 let offscreen = null;
 let renderTimer = null;
 
-// Segmented theme control
+// Theme segmented control
 document.getElementById("themeSeg").addEventListener("click", e => {
   const btn = e.target.closest(".seg-btn");
   if (!btn) return;
@@ -566,18 +603,21 @@ document.getElementById("themeSeg").addEventListener("click", e => {
   scheduleRender();
 });
 
-// Range display
-[["rectSize", "rectSizeVal", v => v], ["density", "densityVal", v => parseFloat(v).toFixed(2)],
- ["rectAspect", "rectAspectVal", v => parseFloat(v).toFixed(1)]].forEach(([id, valId, fmt]) => {
+// Range labels
+[["rectSize", "rectSizeVal", v => v],
+ ["density",  "densityVal",  v => parseFloat(v).toFixed(2)],
+ ["rectAspect","rectAspectVal", v => parseFloat(v).toFixed(1)]
+].forEach(([id, valId, fmt]) => {
   const el = document.getElementById(id);
-  const vl = document.getElementById(valId);
-  el.addEventListener("input", () => { vl.textContent = fmt(el.value); scheduleRender(); });
+  document.getElementById(id).addEventListener("input", () => {
+    document.getElementById(valId).textContent = fmt(el.value);
+    scheduleRender();
+  });
 });
 
-// Other controls
-["format", "shape", "seed"].forEach(id =>
+["format","shape","seed"].forEach(id =>
   document.getElementById(id).addEventListener("change", scheduleRender));
-["title", "subheading", "meta"].forEach(id =>
+["title","subheading","meta"].forEach(id =>
   document.getElementById(id).addEventListener("input", scheduleRender));
 
 document.getElementById("randBtn").addEventListener("click", () => {
@@ -595,24 +635,21 @@ function scheduleRender() {
 }
 
 async function render() {
-  const spinner = document.getElementById("spinner");
-  spinner.classList.add("visible");
+  document.getElementById("spinner").classList.add("visible");
 
-  const fmt       = document.getElementById("format").value;
-  const shape     = document.getElementById("shape").value;
-  const rectSize  = parseFloat(document.getElementById("rectSize").value);
-  const rectAspect= parseFloat(document.getElementById("rectAspect").value);
-  const density   = parseFloat(document.getElementById("density").value);
-  const seed      = parseInt(document.getElementById("seed").value) || 1;
-  const title     = document.getElementById("title").value;
-  const subheading= document.getElementById("subheading").value;
-  const meta      = document.getElementById("meta").value;
-
+  const fmt        = document.getElementById("format").value;
+  const shape      = document.getElementById("shape").value;
+  const rectSize   = parseFloat(document.getElementById("rectSize").value);
+  const rectAspect = parseFloat(document.getElementById("rectAspect").value);
+  const density    = parseFloat(document.getElementById("density").value);
+  const seed       = parseInt(document.getElementById("seed").value) || 1;
+  const title      = document.getElementById("title").value;
+  const subheading = document.getElementById("subheading").value;
+  const meta       = document.getElementById("meta").value;
   const { width, height } = FORMATS[fmt];
 
   await ensureFont();
 
-  // Full-res offscreen canvas
   if (!offscreen) offscreen = document.createElement("canvas");
   offscreen.width  = width;
   offscreen.height = height;
@@ -630,31 +667,53 @@ async function render() {
   drawMeta(ctx, width, height, meta);
   drawLogo(ctx, width, height, theme);
 
-  // Scale to preview canvas
+  // Paint to scaled preview canvas
   const preview = document.getElementById("preview");
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const dispW = preview.parentElement.clientWidth;
-  const dispH = Math.round(height * dispW / width);
-  preview.width  = dispW * dpr;
-  preview.height = dispH * dpr;
-  preview.style.width  = dispW + "px";
-  preview.style.height = dispH + "px";
+  const wrap    = document.getElementById("previewWrap");
+  const dpr     = Math.min(window.devicePixelRatio || 1, 2);
+  const isDesktop = window.innerWidth >= 800;
+
+  let dispW, dispH;
+  if (isDesktop) {
+    // Fit inside the available panel space with padding
+    const padPx = 56; // 2 × 28px padding
+    const maxW = wrap.clientWidth  - padPx;
+    const maxH = wrap.clientHeight - padPx;
+    const scale = Math.min(maxW / width, maxH / height, 1);
+    dispW = Math.round(width  * scale);
+    dispH = Math.round(height * scale);
+    preview.style.width  = dispW + "px";
+    preview.style.height = dispH + "px";
+  } else {
+    dispW = wrap.clientWidth;
+    dispH = Math.round(height * dispW / width);
+    preview.style.width  = dispW + "px";
+    preview.style.height = dispH + "px";
+  }
+
+  preview.width  = Math.round(dispW * dpr);
+  preview.height = Math.round(dispH * dpr);
   const pCtx = preview.getContext("2d");
   pCtx.scale(dpr, dpr);
   pCtx.drawImage(offscreen, 0, 0, dispW, dispH);
 
-  spinner.classList.remove("visible");
+  document.getElementById("spinner").classList.remove("visible");
 }
+
+// Re-render on window resize (desktop panel resizes)
+let resizeTimer;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(render, 100);
+});
 
 // ─── Export ───────────────────────────────────────────────────────────────
 
 function exportImage() {
   if (!offscreen) { render().then(exportImage); return; }
-
-  const url = offscreen.toDataURL("image/png");
-
-  // iOS Safari doesn't honour <a download>, so open in new tab for long-press save
+  const url   = offscreen.toDataURL("image/png");
   const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent);
+
   if (isIOS) {
     const w = window.open("", "_blank");
     if (w) {
@@ -663,12 +722,11 @@ function exportImage() {
         '<meta name="viewport" content="width=device-width,initial-scale=1">' +
         '<title>HIVE Ad</title>' +
         '<style>body{margin:0;background:#000;display:flex;flex-direction:column;align-items:center;' +
-        'justify-content:center;min-height:100dvh;gap:16px;font-family:sans-serif}' +
+        'justify-content:center;min-height:100dvh;gap:14px;font-family:sans-serif}' +
         'img{max-width:100%;max-height:80dvh;display:block}' +
-        'p{color:rgba(255,255,255,.55);font-size:13px;padding:0 20px;text-align:center}</style>' +
-        '</head><body>' +
-        '<img src="' + url + '">' +
-        '<p>Press and hold the image, then tap <strong style="color:#fff">Save to Photos</strong></p>' +
+        'p{color:rgba(255,255,255,.5);font-size:13px;padding:0 20px;text-align:center}</style>' +
+        '</head><body><img src="' + url + '">' +
+        '<p>Press and hold → <strong style="color:#fff">Save to Photos</strong></p>' +
         '</body></html>'
       );
       w.document.close();
@@ -682,8 +740,7 @@ function exportImage() {
   a.click();
 }
 
-// ─── Init ─────────────────────────────────────────────────────────────────
-
+// ─── Boot ─────────────────────────────────────────────────────────────────
 render();
 </script>
 
