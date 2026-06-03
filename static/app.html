@@ -558,22 +558,32 @@ function drawMeta(ctx, w, h, meta) {
   ctx.fillText(meta.toUpperCase(), pad, h - pad - logoH * 2.6);
 }
 
-function drawLogoMark(ctx, x, cy, size, color) {
-  const arrowH = size * 0.42, headD = size * 0.30, lw = Math.max(1.5, size * 0.085);
-  ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.lineCap = "butt"; ctx.lineJoin = "miter";
-  ctx.beginPath(); ctx.moveTo(x + headD, cy - arrowH/2); ctx.lineTo(x, cy); ctx.lineTo(x + headD, cy + arrowH/2); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(x + lw/2, cy); ctx.lineTo(x + size - lw/2, cy); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(x + size - headD, cy - arrowH/2); ctx.lineTo(x + size, cy); ctx.lineTo(x + size - headD, cy + arrowH/2); ctx.stroke();
-  ctx.restore();
+// ─── Logo SVG (viewBox 0 0 1027.81 203.21) ───────────────────────────────
+function logoSVG(color) {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1027.81 203.21"><g fill="${color}"><path d="M515.81,119.82h-93.92v83.39h-40.7V0h40.7v83.39h93.92V0h40.7v203.21h-40.7v-83.39Z"/><path d="M597.49,0h40.7v203.21h-40.7V0Z"/><path d="M660.67,0h44.4l52.65,158.24h.85L810.94,0h42.69l-75.71,203.21h-41.84L660.67,0Z"/><path d="M875.83,0h151.7v35.01h-111v48.38h102.74v35.58h-102.74v48.67h111.28v35.58h-151.98V0Z"/><path d="M59.58,83.13h156.44v36.95H59.58v-36.95Z"/><polygon points="110.34 166.26 110.34 203.2 48.14 203.2 0 120.08 59.54 120.08 59.54 166.26 110.34 166.26"/><polygon points="110.34 0 110.34 36.95 59.58 36.95 59.58 83.13 0 83.13 48.14 0 110.34 0"/><polygon points="276.1 120.08 227.96 203.2 165.76 203.2 165.76 166.26 216.02 166.26 216.02 120.08 276.1 120.08"/><polygon points="216.02 83.13 216.02 36.95 165.76 36.95 165.76 0 227.96 0 276.1 83.13 216.02 83.13"/></g></svg>`;
 }
-function drawLogo(ctx, w, h, theme) {
-  const color = theme === "Dark Navy" ? COLORS.white : COLORS.darkNavy;
-  const pad = Math.round(w * 0.072), logoH = Math.round(w * 0.047);
-  const markW = Math.round(logoH * 1.15), gap = Math.round(logoH * 0.45);
-  const cy = h - pad - logoH / 2;
-  drawLogoMark(ctx, pad, cy, markW, color);
-  ctx.fillStyle = color; ctx.font = `${Math.round(logoH * 0.92)}px ${FONT_FAMILY}`; ctx.textBaseline = "middle";
-  ctx.fillText("HIVE", pad + markW + gap, cy);
+
+const _logoCache = {};
+function getLogoImg(color) {
+  if (_logoCache[color]) return Promise.resolve(_logoCache[color]);
+  const url = "data:image/svg+xml;base64," + btoa(logoSVG(color));
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => { _logoCache[color] = img; res(img); };
+    img.onerror = rej;
+    img.src = url;
+  });
+}
+
+async function drawLogo(ctx, w, h, theme) {
+  const color  = theme === "Dark Navy" ? "#FFFFFF" : "#2F3D48";
+  const pad    = Math.round(w * 0.072);
+  const logoH  = Math.round(w * 0.047);
+  const logoW  = Math.round(logoH * (1027.81 / 203.21));
+  try {
+    const img = await getLogoImg(color);
+    ctx.drawImage(img, pad, h - pad - logoH, logoW, logoH);
+  } catch (_) {}
 }
 
 // ─── Font ─────────────────────────────────────────────────────────────────
@@ -665,7 +675,7 @@ async function render() {
   drawTitle(ctx, width, height, title, theme);
   drawSubheading(ctx, width, height, subheading, title, theme);
   drawMeta(ctx, width, height, meta);
-  drawLogo(ctx, width, height, theme);
+  await drawLogo(ctx, width, height, theme);
 
   // Paint to scaled preview canvas
   const preview = document.getElementById("preview");
