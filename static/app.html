@@ -689,13 +689,9 @@ function drawLogoSync(ctx, w, h, theme) {
 function updatePreview() {
   if (!offscreen) return;
   const preview = document.getElementById("preview");
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
   const pCtx = preview.getContext("2d");
   pCtx.setTransform(1, 0, 0, 1, 0, 0);
-  pCtx.scale(dpr, dpr);
-  const dispW = parseInt(preview.style.width);
-  const dispH = parseInt(preview.style.height);
-  pCtx.drawImage(offscreen, 0, 0, dispW, dispH);
+  pCtx.drawImage(offscreen, 0, 0, preview.width, preview.height);
 }
 
 function drawAnimFrame(t) {
@@ -824,7 +820,6 @@ async function render() {
   // Size the preview canvas to fit its container
   const preview   = document.getElementById("preview");
   const wrap      = document.getElementById("previewWrap");
-  const dpr       = Math.min(window.devicePixelRatio || 1, 2);
   const isDesktop = window.innerWidth >= 800;
   let dispW, dispH;
   if (isDesktop) {
@@ -836,10 +831,8 @@ async function render() {
     dispW = wrap.clientWidth;
     dispH = Math.round(height * dispW / width);
   }
-  preview.style.width  = dispW + "px";
-  preview.style.height = dispH + "px";
-  preview.width  = Math.round(dispW * dpr);
-  preview.height = Math.round(dispH * dpr);
+  preview.width  = dispW;
+  preview.height = dispH;
 
   updatePreview();
   document.getElementById("spinner").classList.remove("visible");
