@@ -73,7 +73,7 @@ export default async function ({ params, mechanic }) {
     drawTitle(ctx, width, height, title, theme);
     drawSubheading(ctx, width, height, subheading, title, theme);
     drawMeta(ctx, width, height, meta, theme);
-    drawLogo(ctx, width, height, theme);
+    await drawLogo(ctx, width, height, theme);
 
     mechanic.frame(canvas);
     await new Promise(r => requestAnimationFrame(r));
