@@ -2,7 +2,7 @@
 
 export const COLORS = {
   darkNavy:     "#2F3D48",
-  hiveRed:      "#FF371C",
+  hiveRed:      "#FF2713",
   darkBlueIce:  "#CDDDE6",
   blueIce:      "#E1EAED",
   lightBlueIce: "#F2F6F7",
