@@ -39,12 +39,17 @@
       border-bottom: 1px solid var(--border);
       flex-shrink: 0;
     }
-    .logo {
-      font-size: 15px;
-      font-weight: 700;
-      letter-spacing: 0.18em;
+    .logo { display: flex; align-items: center; }
+    .logo svg { display: block; height: 22px; width: auto; }
+
+    .progress {
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+      letter-spacing: 0.05em;
+      padding: 0 20px 8px;
+      display: none;
     }
-    .logo span { color: var(--red); }
+    .progress.visible { display: block; }
     .header-sub {
       font-size: 11px;
       color: rgba(255,255,255,0.35);
@@ -308,7 +313,19 @@
 <div class="shell">
 
   <header>
-    <div class="logo">HIVE<span>.</span></div>
+    <div class="logo">
+      <svg viewBox="0 0 1027.81 203.21" fill="white" xmlns="http://www.w3.org/2000/svg">
+        <path d="M515.81,119.82h-93.92v83.39h-40.7V0h40.7v83.39h93.92V0h40.7v203.21h-40.7v-83.39Z"/>
+        <path d="M597.49,0h40.7v203.21h-40.7V0Z"/>
+        <path d="M660.67,0h44.4l52.65,158.24h.85L810.94,0h42.69l-75.71,203.21h-41.84L660.67,0Z"/>
+        <path d="M875.83,0h151.7v35.01h-111v48.38h102.74v35.58h-102.74v48.67h111.28v35.58h-151.98V0Z"/>
+        <path d="M59.58,83.13h156.44v36.95H59.58v-36.95Z"/>
+        <polygon points="110.34 166.26 110.34 203.2 48.14 203.2 0 120.08 59.54 120.08 59.54 166.26 110.34 166.26"/>
+        <polygon points="110.34 0 110.34 36.95 59.58 36.95 59.58 83.13 0 83.13 48.14 0 110.34 0"/>
+        <polygon points="276.1 120.08 227.96 203.2 165.76 203.2 165.76 166.26 216.02 166.26 216.02 120.08 276.1 120.08"/>
+        <polygon points="216.02 83.13 216.02 36.95 165.76 36.95 165.76 0 227.96 0 276.1 83.13 216.02 83.13"/>
+      </svg>
+    </div>
     <div class="header-sub">AD GENERATOR</div>
   </header>
 
@@ -399,10 +416,26 @@ Limitless.</textarea>
           </div>
         </div>
 
+        <hr>
+
+        <div class="group">
+          <div class="group-title">Animation</div>
+          <div>
+            <label>Duration — <span id="durationVal">3</span>s</label>
+            <input type="range" id="duration" min="1" max="10" step="1" value="3">
+          </div>
+          <div>
+            <label>Frame rate — <span id="fpsVal">30</span> fps</label>
+            <input type="range" id="fps" min="15" max="60" step="1" value="30">
+          </div>
+        </div>
+
       </div><!-- /controls -->
 
+      <div class="progress" id="progress"></div>
       <div class="actions">
         <button class="btn btn-primary" id="exportBtn">Export Image</button>
+        <button class="btn btn-secondary" id="exportVideoBtn">Export Video</button>
         <button class="btn btn-secondary" id="refreshBtn">Refresh Preview</button>
       </div>
     </div><!-- /sidebar -->
@@ -517,13 +550,19 @@ function drawBg(ctx, w, h, theme) {
   }
 }
 
-function drawPixels(ctx, w, h, cells, cols, rows, cellW, cellH, rectW, rectH, color) {
+function drawPixels(ctx, w, h, cells, cols, rows, cellW, cellH, rectW, rectH, color, time) {
+  const k = (5 * Math.PI * 2) / cols, omega = Math.PI * 2;
   for (let row = 0; row < rows; row++)
     for (let col = 0; col < cols; col++) {
       const x = col * cellW, y = row * cellH;
       if (x >= w || y >= h) continue;
       const i = (row * cols + col) * 3;
-      const base = cells[i], r1 = cells[i+1], r2 = cells[i+2];
+      let base = cells[i]; const r1 = cells[i+1], r2 = cells[i+2];
+      if (time > 0) {
+        const w1 = 0.5 + 0.5 * Math.sin(k * col - omega * time);
+        const w2 = 0.6 + 0.4 * Math.sin(k * 0.6 * col - omega * 0.7 * time + 1.2);
+        base = base * (w1 * 0.7 + w2 * 0.3);
+      }
       if (r1 > base * 1.12) continue;
       ctx.globalAlpha = Math.max(0, Math.min(1, base * 1.5) * (0.45 + r2 * 0.55));
       ctx.fillStyle   = color;
@@ -614,14 +653,16 @@ document.getElementById("themeSeg").addEventListener("click", e => {
 });
 
 // Range labels
-[["rectSize", "rectSizeVal", v => v],
- ["density",  "densityVal",  v => parseFloat(v).toFixed(2)],
- ["rectAspect","rectAspectVal", v => parseFloat(v).toFixed(1)]
+[["rectSize",   "rectSizeVal",   v => v],
+ ["density",    "densityVal",    v => parseFloat(v).toFixed(2)],
+ ["rectAspect", "rectAspectVal", v => parseFloat(v).toFixed(1)],
+ ["duration",   "durationVal",   v => v],
+ ["fps",        "fpsVal",        v => v],
 ].forEach(([id, valId, fmt]) => {
   const el = document.getElementById(id);
-  document.getElementById(id).addEventListener("input", () => {
+  el.addEventListener("input", () => {
     document.getElementById(valId).textContent = fmt(el.value);
-    scheduleRender();
+    if (id !== "duration" && id !== "fps") scheduleRender();
   });
 });
 
@@ -636,6 +677,7 @@ document.getElementById("randBtn").addEventListener("click", () => {
 });
 document.getElementById("refreshBtn").addEventListener("click", () => render());
 document.getElementById("exportBtn").addEventListener("click", exportImage);
+document.getElementById("exportVideoBtn").addEventListener("click", exportVideo);
 
 // ─── Render ───────────────────────────────────────────────────────────────
 
@@ -748,6 +790,100 @@ function exportImage() {
   a.download = "hive-ad.png";
   a.href = url;
   a.click();
+}
+
+// ─── Export video (MediaRecorder) ─────────────────────────────────────────
+
+async function exportVideo() {
+  if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) {
+    alert("Video export requires Chrome, Firefox, or Safari 16+. Try a different browser.");
+    return;
+  }
+
+  const btn      = document.getElementById("exportVideoBtn");
+  const progress = document.getElementById("progress");
+  btn.disabled   = true;
+  btn.textContent = "Recording…";
+  progress.classList.add("visible");
+
+  const fmt        = document.getElementById("format").value;
+  const shape      = document.getElementById("shape").value;
+  const rectSize   = parseFloat(document.getElementById("rectSize").value);
+  const rectAspect = parseFloat(document.getElementById("rectAspect").value);
+  const density    = parseFloat(document.getElementById("density").value);
+  const seed       = parseInt(document.getElementById("seed").value) || 1;
+  const title      = document.getElementById("title").value;
+  const subheading = document.getElementById("subheading").value;
+  const meta       = document.getElementById("meta").value;
+  const duration   = parseInt(document.getElementById("duration").value);
+  const fps        = parseInt(document.getElementById("fps").value);
+  const { width, height } = FORMATS[fmt];
+  const totalFrames = duration * fps;
+
+  await ensureFont();
+
+  const vc = document.createElement("canvas");
+  vc.width  = width;
+  vc.height = height;
+  const ctx = vc.getContext("2d");
+
+  const { rectW, rectH, cellW, cellH, cols, rows } = computeCells(width, height, rectSize, rectAspect);
+  const cells = buildCells(cols, rows, shape, density, makeRng(seed));
+  const color = theme === "Dark Navy" ? COLORS.white : COLORS.darkNavy;
+
+  // Pre-load logo image before recording starts
+  const logoColor = theme === "Dark Navy" ? "#FFFFFF" : "#2F3D48";
+  await getLogoImg(logoColor);
+
+  // Pick a supported MIME type
+  const mimeType = ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm", "video/mp4"]
+    .find(t => MediaRecorder.isTypeSupported(t)) || "video/webm";
+
+  const stream   = vc.captureStream(fps);
+  const recorder = new MediaRecorder(stream, { mimeType });
+  const chunks   = [];
+  recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+
+  const done = new Promise(res => {
+    recorder.onstop = () => {
+      const blob = new Blob(chunks, { type: mimeType });
+      const ext  = mimeType.includes("mp4") ? "mp4" : "webm";
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.download = `hive-ad.${ext}`;
+      a.href     = url;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      res();
+    };
+  });
+
+  recorder.start();
+
+  const frameDuration = 1000 / fps;
+  for (let f = 0; f < totalFrames; f++) {
+    const t = f / totalFrames;
+    progress.textContent = `Frame ${f + 1} / ${totalFrames}`;
+
+    ctx.clearRect(0, 0, width, height);
+    drawBg(ctx, width, height, theme);
+    drawPixels(ctx, width, height, cells, cols, rows, cellW, cellH, rectW, rectH, color, t);
+    drawTitle(ctx, width, height, title, theme);
+    drawSubheading(ctx, width, height, subheading, title, theme);
+    drawMeta(ctx, width, height, meta);
+    await drawLogo(ctx, width, height, theme);
+
+    // Hold this frame for its real-time duration
+    await new Promise(r => setTimeout(r, frameDuration));
+  }
+
+  recorder.stop();
+  await done;
+
+  btn.disabled   = false;
+  btn.textContent = "Export Video";
+  progress.textContent = "";
+  progress.classList.remove("visible");
 }
 
 // ─── Boot ─────────────────────────────────────────────────────────────────
